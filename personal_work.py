@@ -32,5 +32,4 @@ recursive_text_splitter = RecursiveCharacterTextSplitter(
 text_splits = text_splitter.split_documents(docs)
 
 
-for i, chunk in enumerate(text_splits[:1]):  # 슬라이싱으로 상위 3개만 가져옴
-    print(f"Chunk {i}: {chunk}")
+text_splits
