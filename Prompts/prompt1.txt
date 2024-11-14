@@ -1,0 +1,1 @@
+system_template = "Create Answer only use given data and make answer in Korean only"
