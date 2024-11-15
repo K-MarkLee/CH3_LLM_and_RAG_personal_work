@@ -3,8 +3,9 @@
 ### **1.1. 패키지**
 
 프로그램에 필요한 패키지와 클래스들을 모두 불러오는 단계이다.
-
+```
 # 환경 변수를 불러오기 위한 os 모듈을 사용한다.
+
 import os
 
 # re는 정규 표현식(Regular Expression) 관련 작업을 처리하는 모듈이다.
@@ -45,6 +46,7 @@ from uuid import uuid4
 
 # 도전과제에서의 프린트 시간을 생성하기 위한 기능 불러오기.
 from datetime import datetime
+```
 
 ---
 ## **2. API 환경변수 설정 및 모델 초기화**
@@ -53,7 +55,7 @@ API 키를 설정하고 모델의 초기화를 하는 단계이다.
 
 
 
-
+```
 # OpenAI_API_KEY에 현재 나의 GPT_API키의 값을 가져와서 할당한다.
 os.environ["OpenAI_API_KEY"] = os.getenv("GPT_API")
 
@@ -78,7 +80,7 @@ PDF 파일을 살펴보면, 페이지 내에 필요 없는 단어나 꾸밈 요�
   
 이러한 불필요한 요소들은 학습의 효율성을 저하시킬 수 있으므로,  
 데이터 전처리를 통해 제거한다.
-
+```
 ---
 
 #### **전처리 대상**
@@ -111,7 +113,8 @@ PDF 파일을 살펴보면, 페이지 내에 필요 없는 단어나 꾸밈 요�
 ### **데이터 전처리 방법**
 - 정규식을 이용한 데이터의 분별 후 제거및 다른 데이터로 교체 할 예정.
 
-# 줄바꿈 제거 및 각주/참고문헌 제거 함수
+# 줄바꿈 제거 및 각주/참고문헌 제거 함수\
+```
 def clean_text(documents):
     for doc in documents:
         content = doc.page_content
@@ -148,6 +151,7 @@ def clean_text(documents):
         doc.page_content = content.strip()
 
     return documents
+```
 ---
 ### **3.2. 전처리 과정을 거친 데이터**
 
@@ -160,9 +164,10 @@ def clean_text(documents):
 1. PDF 파일을 전처리 함수(`clean_text`)에 입력합니다.
 2. 함수는 필요 없는 각주, URL, 중복 공백, 특정 패턴 등을 제거합니다.
 3. 전처리된 데이터를 `cleaned_doc`에 저장합니다.
-
+```
 cleaned_pdf = clean_text(pdf_loader)
 cleaned_pdf1 = clean_text(pdf1_loader)
+```
 ---
 ## **4. 문서 청크로 나누기**
 
@@ -222,7 +227,7 @@ cleaned_pdf1 = clean_text(pdf1_loader)
 - `is_separator_regex`: 정규식 분리 여부.
 
 PDF 데이터의 특수한 요구 사항에 따라 설정값을 조정하거나, 추가적인 전처리 과정을 도입하는 것이 필요할 수 있습니다.
-
+```
 text_splitter = CharacterTextSplitter(
     separator = "\n\n",
     chunk_size=100,
@@ -230,6 +235,7 @@ text_splitter = CharacterTextSplitter(
     length_function=len,
     is_separator_regex=False,
 )
+```
 ---
 ### **4.2. RecursiveCharacterTextSplitter**
 
@@ -257,7 +263,7 @@ text_splitter = CharacterTextSplitter(
 | **분할 기준**                  | 단일 기준 (`separator`) 사용                   | 다중 기준 (`separators` 리스트) 사용            |
 | **우선순위 분할**              | 없음                                           | 리스트의 순서대로 분할 시도                     |
 | **유연성**                     | 고정된 분할 기준                              | 여러 기준을 순차적으로 시도하며 더 유연         |
-
+```
 recursive_text_splitter = RecursiveCharacterTextSplitter(
     separators=["\n\n", "\n", " "] ,
     chunk_size=500,
@@ -265,6 +271,7 @@ recursive_text_splitter = RecursiveCharacterTextSplitter(
     length_function=len,
     is_separator_regex=False,
 )
+```
 ### **4.3. 텍스트 분할 및 레퍼런스 제외**
 
 전처리된 텍스트(`cleaned_doc`)를 `text_splitter`를 사용해 분할하여 `text_splits` 객체에 저장한다.  
@@ -273,13 +280,13 @@ pdf 의 경우 11페이지부터는 레퍼런스가 포함되어 있으므로, *
 pdf 의 경우에는 10페이지부터 있기 때문에, **9페이지까지만** 데이터를 불러온다.
 
 
-
+```
 pdf_text_splits = text_splitter.split_documents(cleaned_pdf)
 pdf_text_splits = pdf_text_splits[:11]
 
 pdf1_text_splits = text_splitter.split_documents(cleaned_pdf1)
 pdf1_text_splits = pdf1_text_splits[1:10]
-
+```
 
 ---
 ### **Recursive 테스트**
@@ -287,7 +294,7 @@ pdf1_text_splits = pdf1_text_splits[1:10]
 `RecursiveCharacterTextSplitter`를 사용해 테스트를 진행합니다.  
 `merge_lines` 함수를 적용하지 않는 이유는, **recursive 방식은 한 줄씩 스플릿되기 때문에** 계단식으로 데이터가 증가하는 현상이 발생하기 때문입니다.  
 또한, `RecursiveCharacterTextSplitter`는 추가적인 조정이 많이 필요해 보이며, 테스트 이후에는 `text_splits` 방식으로 데이터 처리를 이어갈 계획입니다.
-
+```
 text_recursive = recursive_text_splitter.split_documents(cleaned_pdf)
 
 # 빈 리스트를 생성
@@ -300,7 +307,7 @@ for doc in text_recursive:
         # 나오는 doc을 새로운 리스트에 할당.  
         filter_recursive.append(doc)  
         # 여기서 filter_recursive += doc하게되면 객체에 따로따로 들어가기 떄문에 변경.
-
+```
 ---
 ### **4.4. merge_lines 함수**
 
@@ -337,7 +344,7 @@ for doc in text_recursive:
 
 7. **결과 업데이트**
    - 연결된 텍스트로 현재 청크의 내용을 덮어씀.
-
+```
 def merge_lines(text):
     
     # 첫 번째 청크는 제외하기
@@ -359,13 +366,14 @@ def merge_lines(text):
         text[i].page_content = merged_text
 
     return text
+```
 ---
 ### **4.5. 텍스트 병합 및 데이터 확인**
 
 `text_splits` 객체(스플릿된 텍스트 데이터)를 `merge_lines` 함수를 통해 처리하여 페이지 간 끊어진 문장을 연결한 새 객체 `merge_splits`에 저장합니다.  
 이를 표시하여 데이터가 정제된 결과를 확인합니다.
 
-
+```
 # merge lines를 통과한 pdf데이터를 생성.
 pdf_merge_splits = merge_lines(pdf_text_splits)
 print("pdf file content : ")
@@ -394,16 +402,17 @@ for idx, split in enumerate(filter_recursive[:1]):
 
 # # lambda x 는 score를 대변하며, 1에 가까울수록 정렬후, reverse = True로 변경 한 것이다.
 # sorted_results = sorted(results_with_scores, key=lambda x: x[1], reverse=True)
-
+```
 ---
 ## **5. LLM 모델 적용을 위한 임베딩 생성**
 
 LLM 모델에 데이터를 적용하기 위해 텍스트 데이터를 **임베딩(Embedding)** 해야 합니다.  
 임베딩 객체를 생성하고, 필요한 모델을 설정합니다.
 
-
+```
 # OpenAI 임베딩 모델로 벡터 임베딩을 생성
 embeddings = OpenAIEmbeddings(model = "text-embedding-ada-002")
+```
 ---
 ## **6. 벡터 스토어 생성**
 
@@ -412,7 +421,7 @@ embeddings = OpenAIEmbeddings(model = "text-embedding-ada-002")
 # FAISS 인덱스 생성
 # L2(유클리드 거리) 기반으로 텍스트 벡터를 저장하고 검색하기 위한 인덱스
 index = faiss.IndexFlatL2(len(embeddings.embed_query("LLM에 대해서")))
-
+```
 # FAISS 벡터스토어 생성
 vectorstore = FAISS(
     # 임베딩 함수 지정: 텍스트를 벡터로 변환하는 함수
@@ -427,10 +436,11 @@ vectorstore = FAISS(
     # 문서와 인덱스 간 매핑: 각 문서의 ID와 벡터 인덱스 간 관계를 저장하는 딕셔너리
     index_to_docstore_id={}
 )
+```
 
 ---
 ### 6.1. 백테 데이터베이스에 문서 추가
-
+```
 uuid를 불러와 unique한 id를 생성하고 벡터 데이터베이스에 pdf파일을 추가한다.
 # pdf 문서 데이터 추가
 # pdf_merge_splits의 갯수만큼, uuid 를 생성한다.
@@ -444,6 +454,7 @@ vectorstore.add_documents(documents=pdf_merge_splits, ids = uuids)
 uuids = [str(uuid4()) for _ in range(len(pdf1_merge_splits))]
 vectorstore.add_documents(documents=pdf1_merge_splits, ids = uuids)
 ---
+```
 ### **6.2. 유사성 검사를 통한 문서 확인**
 
 문서가 둘다 제대로 들어가 있는지를 알기 위해
@@ -453,7 +464,7 @@ vectorstore.add_documents(documents=pdf1_merge_splits, ids = uuids)
 
 벡터 데이터베이스에서 텍스트와 가장 유사한 문서를 검색하고, 점수와 함께 검색 결과를 확인한다.
 
-
+```
 # 기본 유사성 검색
 # results = vectorstore.similarity_search("LLM은 어떨가요?", k=2, filter={"source": "data/LLM_Research_Trends.pdf"})
 # for res in results:
@@ -472,7 +483,7 @@ for res, score in results_with_scores:
     # " " 은 스페이스의 허용/ ""는 스페이스 없이
     limited_content = " ".join(res.page_content.split()[:10])  # 첫 10단어만 추출
     print(f"* [SIM={score:.3f}] [{limited_content} ...] {res.metadata}")
-
+```
 ---
 ## **7. FAISS를 Retriever로 변환**
 
@@ -481,9 +492,10 @@ retriever생성한다.
 
 검색의 방식을 "유사도" 로 설정하고,  
 검색 결과에서 가장 유사한 문서 5개를 반환하도록 설정한다.
-  
+  ```
 이는 5개의 유사한 문서를 토대로 답변을 생성 할 것이다. (3~5 디폴트)
 retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 5})
+```
 ---
 ## **8. 프롬프트 템플릿의 정의**
 
@@ -510,7 +522,7 @@ retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k
 
 
 이 프롬프트는 컨텍스트 데이터 기반의 응답 생성에 최적화되어 있으며, 제한된 범위 내에서 신뢰성 있는 답변을 보장합니다.
-
+```
 # contextual_prompt = ChatPromptTemplate.from_messages([
 #     # 시스템 메시지: 답변 규칙 정의
 #     ("system", "Answer the following question using only given context data."),
@@ -544,10 +556,11 @@ retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k
 #     # 사용자 메시지 템플릿
 #     ("user", "Context: {context}\\n\\nQuestion: {question}")
 # ])
-
+```
 ---
 # 도전 과제를 위한 불러오기
 # 파일 경로와 시스템 메시지 파일 리스트
+```
 path = "Prompts/"
 system_files = ["prompt1.txt", "prompt2.txt", "prompt3.txt", "prompt4.txt"]
 
@@ -567,6 +580,7 @@ system_messages.append(("user", "Context: {context}\\n\\nQuestion: {question}"))
 # ChatPromptTemplate 생성
 contextual_prompt = ChatPromptTemplate.from_messages(system_messages)
 contextual_prompt
+```
 
 ---
 ## **9. RAG 체인 구성**
@@ -624,7 +638,7 @@ contextual_prompt
 RAG 체인은 검색, 디버깅, 데이터 변환, 프롬프트 생성, 모델 호출 단계를 포함하여 데이터의 흐름을 체계적으로 처리합니다.
 
 
-
+```
 # 데이터가 정상적으로 전달되는지 확인을 위한 디버깅 클래스
 class DebugPassThrough(RunnablePassthrough):
     
@@ -660,6 +674,8 @@ rag_chain_debug = {
     
     # RAG체인의 순서를 설정. Retriever > Debug > context > prompt > model순으로 데이터 전달.      
 }  | DebugPassThrough() | ContextToText()|   contextual_prompt | model
+
+```
 ---
 ## **10. 챗봇 구동**
 
@@ -728,7 +744,7 @@ rag_chain_debug = {
   
 이 시스템은 사용자와의 상호작용을 통해 검색 및 생성 모델의 능력을 효과적으로 활용합니다.
 
-
+```
 # while True: 
 #     print("========================")
     
@@ -755,9 +771,10 @@ rag_chain_debug = {
 #     print("Distance : ", average_score)
 #     print("Final Response:")
 #     print(response.content)
+```
 ---
 # 도전 과제를 위한 프린트 path로 저장하기
-
+```
 # 결과 저장 경로 설정
 output_path = "Results/"
 
@@ -810,4 +827,4 @@ while True:
         f.write(response.content)
     
     print(f"Result saved to: {file_path}")
-
+```
