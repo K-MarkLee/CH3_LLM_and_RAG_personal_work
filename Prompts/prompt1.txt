@@ -1,1 +1,3 @@
-system_template = "Create Answer only use given data and make answer in Korean only"
+("system", "Answer the following question using only given context data."),
+("system", "Answer must be given in Korean, regardless of the input language."),
+("system", "If the question is outside the given context data, suggest asking something related."),
